@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { PrismaClient } from 'generated/prisma';
@@ -5,6 +6,8 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { envs } from 'src/config';
+import { stat } from 'fs';
 
 @Injectable()
 export class AuthService extends PrismaClient implements OnModuleInit {
@@ -93,6 +96,24 @@ export class AuthService extends PrismaClient implements OnModuleInit {
       throw new RpcException({
         status: 400,
         message: error.message,
+      });
+    }
+  }
+
+  async verifyToken(token: string) {
+    try {
+      const { sub, iat, exp, ...user } = this.jwtService.verify(token, {
+        secret: envs.jwtSecret,
+      });
+
+      return {
+        user: user,
+        token: this.signJwt(user),
+      };
+    } catch (error) {
+      throw new RpcException({
+        status: 401,
+        message: `Invalidad token ${error}`,
       });
     }
   }
