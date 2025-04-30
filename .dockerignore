@@ -1,0 +1,7 @@
+distr/
+
+node_modules/
+
+.env
+
+.vscode/
